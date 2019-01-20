@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements Fragment0.Interface0, Fragment1.Interface1, Board.InterfaceB{
 
@@ -34,12 +35,12 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
     Fragment1 frag2;
     Fragment1 frag3;
     int player1max, player2max, player3max, player1first, player2first, player3first;
-    ArrayList<Integer> player1moves, player2moves, player3moves;
+    ArrayList<Integer> player1moves, player2moves, player3moves, storage1, storage2, storage3, playback1, playback2, playback3;
     boolean[] isUnSelected;
-    boolean isFirstRound;
+    boolean isDuringRound;
     int index;
     View tabby;
-    Bundle bundle;
+    Bundle bundle, endOfRound;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +59,16 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
         });
 
         isUnSelected = new boolean[3];
-        isFirstRound = true;
+        isDuringRound = true;
         player1max = 3;
         player2max = 3;
         player3max = 3;
         player1moves = new ArrayList<Integer>();
         player2moves = new ArrayList<Integer>();
         player3moves = new ArrayList<Integer>();
+        storage1 = new ArrayList<Integer>();
+        storage2 = new ArrayList<Integer>();
+        storage3 = new ArrayList<Integer>();
 
         player1first = (int)(Math.random()*99);
         player2first = (int)(Math.random()*99);
@@ -77,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
         player2moves.add(player2first);
         player3moves.add(player3first);
 
+        bundle = new Bundle();
+        endOfRound = new Bundle();
         mPagerAdapter = new PagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mPagerAdapter);
@@ -87,6 +93,11 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 mViewPager.setCurrentItem(tab.getPosition());
+                if(tab.getPosition() == 0)
+                {
+                    frag0.mNext.setEnabled(true);
+                    frag0.mNext.setClickable(true);
+                }
             }
 
             @Override
@@ -105,11 +116,6 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
 
             }
         });
-
-        bundle = new Bundle();
-        bundle.putIntegerArrayList("firstmove1",player1moves);
-        bundle.putIntegerArrayList("firstmove2", player2moves);
-        bundle.putIntegerArrayList("firstmove3", player3moves);
     }
 
     @Override
@@ -134,87 +140,131 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
         return super.onOptionsItemSelected(item);
     }
 
-    public void navigate()
+    public void reset()
     {
+        player1moves = new ArrayList<Integer>();
+        player2moves = new ArrayList<Integer>();
+        player3moves = new ArrayList<Integer>();
+        tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(1);
+        tabby.setClickable(true);
+        tabby.setAlpha(1F);
+        tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(2);
+        tabby.setClickable(true);
+        tabby.setAlpha(1F);
+        tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(3);
+        tabby.setClickable(true);
+        tabby.setAlpha(1F);
+        frag1.moves = 5; frag2.moves = 5; frag3.moves = 5;
+        frag0.at1 = 2; frag0.at2 = 2; frag0.at3 = 2;
+        frag1.movesLeft.setText("Moves Left: " + frag1.moves);
+        frag1.mUp.setEnabled(true); frag1.mDown.setEnabled(true); frag1.mLeft.setEnabled(true); frag1.mRight.setEnabled(true); frag1.mUp.setClickable(true); frag1.mDown.setClickable(true); frag1.mLeft.setClickable(true); frag1.mRight.setClickable(true);
+        frag1.DisablePreviousMove();
+        frag2.DisablePreviousMove();
+        frag3.DisablePreviousMove();
+        isUnSelected[0] = false; isUnSelected[1] = false; isUnSelected[2] = false;
+        for(int i = 0; i < storage1.size(); i++)
+        {
+            frag1.squares[storage1.get(i)].setImageBitmap(frag1.empty);
+        }
+        for(int i = 0; i < storage2.size(); i++)
+        {
+            frag1.squares[storage2.get(i)].setImageBitmap(frag1.empty);
+        }
+        for(int i = 0; i < storage3.size(); i++)
+        {
+            frag1.squares[storage3.get(i)].setImageBitmap(frag1.empty);
+        }
+        int limit = storage1.size() - player1max;
+        for(int i = 0; i < limit; i++)
+        {
+            storage1.remove(0);
+        }
+        limit = storage2.size() - player2max;
+        for(int i = 0; i < limit; i++)
+        {
+            storage2.remove(0);
+        }
+        limit = storage3.size() - player3max;
+        for(int i = 0; i < limit; i++)
+        {
+            storage3.remove(0);
+        }
 
+        for(int i = 0; i < storage1.size(); i++)
+        {
+            player1moves.add(0, storage1.get(i));
+        }
+        for(int i = 0; i < storage2.size(); i++)
+        {
+            player2moves.add(0, storage2.get(i));
+        }
+        for(int i = 0; i < storage3.size(); i++)
+        {
+            player3moves.add(0, storage3.get(i));
+        }
+
+        bundle.putIntegerArrayList("firstmoves1", player1moves);
+        bundle.putIntegerArrayList("firstmoves2", player2moves);
+        bundle.putIntegerArrayList("firstmoves3", player3moves);
+        frag1.setBoard(storage1, storage2, storage3);
+        Collections.reverse(frag1.moveList);
+        Collections.reverse(frag2.moveList);
+        Collections.reverse(frag3.moveList);
     }
 
-    public void navigate1(int i)
+    public void navigate1(int i, ArrayList<Integer> x)
     {
         if(i == 1) {
             isUnSelected[0] = true;
             tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(1);
             tabby.setClickable(false);
             tabby.setAlpha(0.3F);
+            endOfRound.putIntegerArrayList("playback1", x);
         }
         else if(i == 2) {
             isUnSelected[1] = true;
             tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(2);
             tabby.setClickable(false);
             tabby.setAlpha(0.3F);
+            endOfRound.putIntegerArrayList("playback2", x);
         }
         else if(i == 3) {
             isUnSelected[2] = true;
             tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(3);
             tabby.setClickable(false);
             tabby.setAlpha(0.3F);
+            endOfRound.putIntegerArrayList("playback3", x);
         }
         if(isUnSelected[0] && isUnSelected[1] && isUnSelected[2])
         {
             tabby =((ViewGroup) tabLayout.getChildAt(0)).getChildAt(0);
             tabby.setClickable(true);
             tabby.setAlpha(1F);
-            isFirstRound = false;
+            frag0.setArguments(bundle);
+            frag0.retrieveB();
+            isDuringRound = false;
+
+            frag0.setArguments(endOfRound);
+            frag0.retrieveE();
+            frag0.setArguments(bundle);
         }
     }
 
-    public void makeMove(int move, int player){
-        if(player ==1)
-        {
-            player1moves.add(move);
-            if(player1moves.size() > player1max)
-            {
-                player1moves.remove(player1max-1);
-            }
+    public void storeIt(int playerid, ArrayList<Integer> x) {
+        if (playerid == 1) {
+            storage1 = x;
+            bundle.putIntegerArrayList("storage1", storage1);
         }
-        else if(player ==2)
-        {
-            player2moves.add(move);
-            if(player2moves.size() > player2max)
-            {
-                player2moves.remove(player2max-1);
-            }
+        else if (playerid == 2) {
+            storage2 = x;
+            bundle.putIntegerArrayList("storage2", storage2);
         }
-        else if(player ==3)
-        {
-            player3moves.add(move);
-            if(player3moves.size() > player3max)
-            {
-                player3moves.remove(player3max-1);
-            }
+        else if (playerid == 3) {
+            storage3 = x;
+            bundle.putIntegerArrayList("storage3", storage3);
         }
     }
 
-    public boolean isFirstRound()
-    {
-        return isFirstRound;
-    }
-
-    public int firstMove(int player)
-    {
-        if (player == 1) {
-            frag1.firstRound = false;
-            return player1first;
-        }
-        else if(player ==2) {
-            frag2.firstRound = false;
-            return player2first;
-        }
-        else {
-            frag3.firstRound = false;
-            return player3first;
-        }
-    }
     public void todo_board() {
 
     }
@@ -228,6 +278,9 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
         @Override
         public Fragment getItem(int position) {
             if(position == 0) {
+                bundle.putIntegerArrayList("firstmoves1", player1moves);
+                bundle.putIntegerArrayList("firstmoves2", player2moves);
+                bundle.putIntegerArrayList("firstmoves3", player3moves);
                 frag0 = Fragment0.newInstance();
                 frag0.setArguments(bundle);
                 return frag0;
@@ -235,14 +288,38 @@ public class MainActivity extends AppCompatActivity implements Fragment0.Interfa
             else if(position == 1) {
                 Log.i(TAG, "getItem frag1");
                 frag1 = Fragment1.newInstance(1);
+                if(storage1.size() > 0)
+                    bundle.putIntegerArrayList("storage1", storage1);
+                else{
+                    bundle.putIntegerArrayList("firstmoves1", player1moves);
+                    bundle.putIntegerArrayList("firstmoves2", player2moves);
+                    bundle.putIntegerArrayList("firstmoves3", player3moves);
+                }
+                frag1.setArguments(bundle);
                 return frag1;
             }
             else if(position == 2){
                 frag2 = Fragment1.newInstance(2);
+                if(storage2.size() > 0)
+                    bundle.putIntegerArrayList("storage2", storage2);
+                else{
+                    bundle.putIntegerArrayList("firstmoves1", player1moves);
+                    bundle.putIntegerArrayList("firstmoves2", player2moves);
+                    bundle.putIntegerArrayList("firstmoves3", player3moves);
+                }
+                frag2.setArguments(bundle);
                 return frag2;
             }
             else
                 frag3 = Fragment1.newInstance(3);
+                if(storage3.size() > 0)
+                    bundle.putIntegerArrayList("storage3", storage3);
+                else{
+                    bundle.putIntegerArrayList("firstmoves1", player1moves);
+                    bundle.putIntegerArrayList("firstmoves2", player2moves);
+                    bundle.putIntegerArrayList("firstmoves3", player3moves);
+                }
+                frag3.setArguments(bundle);
                 return frag3;
         }
 

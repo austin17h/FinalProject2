@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -16,17 +17,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Fragment0 extends Fragment implements View.OnClickListener, Board.InterfaceB {
     final static String TAG = "fragment0";
+    final static int turnsRemain = 5;
+    int turn = 4;
+
     View mRootView;
     View mBoardView;
     TextView mLabel;
     Button mNext;
     Interface0 mCallback;
-    ArrayList<Integer> player1moves, player2moves, player3moves;
+    ArrayList<Integer> player1moves, player2moves, player3moves, playback1, playback2, playback3;
     Bitmap green, red, blue, empty, black;
     ImageView[] squares;
+    int max1, max2, max3, at1, at2, at3;
 
     public Fragment0() {
     }
@@ -48,10 +54,12 @@ public class Fragment0 extends Fragment implements View.OnClickListener, Board.I
         mNext.setOnClickListener(this);
         mNext.setEnabled(false);
         mNext.setClickable(false);
-        player1moves = getArguments().getIntegerArrayList("firstmove1");
-        player2moves = getArguments().getIntegerArrayList("firstmove2");
-        player3moves = getArguments().getIntegerArrayList("firstmove3");
-
+        player1moves = getArguments().getIntegerArrayList("firstmoves1");
+        player2moves = getArguments().getIntegerArrayList("firstmoves2");
+        player3moves = getArguments().getIntegerArrayList("firstmoves3");
+        max1 = 3;
+        max2 = 3;
+        max3 = 3;
         Resources res = getActivity().getResources();
         green = BitmapFactory.decodeResource(res, R.drawable.blacksquarewgreendot);
         blue = BitmapFactory.decodeResource(res, R.drawable.blacksquarewbluedot1);
@@ -82,6 +90,7 @@ public class Fragment0 extends Fragment implements View.OnClickListener, Board.I
 
         try {
             mCallback = (Interface0) context;
+
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
                     + " must implement Interface0");
@@ -90,16 +99,52 @@ public class Fragment0 extends Fragment implements View.OnClickListener, Board.I
 
     public void updateBoard(ArrayList<Integer> p1, ArrayList<Integer> p2, ArrayList<Integer> p3)
     {
-    for(int i = 0; i < p1.size(); i++)
-    {
-        squares[p1.get(i)].setImageBitmap(red);
-        squares[p2.get(i)].setImageBitmap(green);
-        squares[p3.get(i)].setImageBitmap(blue);
-    }
+        for(int i = 0; i < p1.size(); i++)
+        {
+            squares[p1.get(i)].setImageBitmap(red);
+            //at1++;
+        }
+        for(int i = 0; i < p2.size(); i++){
+            squares[p2.get(i)].setImageBitmap(green);
+            //at2++;
+        }
+        for(int i = 0; i < p3.size(); i++){
+            squares[p3.get(i)].setImageBitmap(blue);
+            //at3++;
+        }
     }
 
     public void changeText(String x){
         mLabel.setText(x);
+    }
+
+    public void retrieveE()
+    {
+        ArrayList<Integer> temp;
+        playback1 = new ArrayList<Integer>();
+        playback2 = new ArrayList<Integer>();
+        playback3 = new ArrayList<Integer>();
+
+        temp = getArguments().getIntegerArrayList("playback1");
+        Collections.reverse(temp);
+        playback1.addAll(temp);
+
+
+        temp = getArguments().getIntegerArrayList("playback2");
+        Collections.reverse(temp);
+        playback2.addAll(temp);
+
+
+        temp = getArguments().getIntegerArrayList("playback3");
+        Collections.reverse(temp);
+        playback3.addAll(temp);
+    }
+
+    public void retrieveB()
+    {
+        player1moves = getArguments().getIntegerArrayList("firstmoves1");
+        player2moves = getArguments().getIntegerArrayList("firstmoves2");
+        player3moves = getArguments().getIntegerArrayList("firstmoves3");
     }
 
     public void todo_board()
@@ -111,9 +156,24 @@ public class Fragment0 extends Fragment implements View.OnClickListener, Board.I
     public void onClick(View v)
     {
         Log.i(TAG, "Clicked0");
+        squares[playback1.get(at1+1)].setImageBitmap(red);
+        squares[playback2.get(at2+1)].setImageBitmap(green);
+        squares[playback3.get(at3+1)].setImageBitmap(blue);
+        if((at1+1)>=max1)
+            squares[playback1.get(at1-max1+1)].setImageBitmap(empty);
+        if((at2+1)>=max2)
+            squares[playback2.get(at2-max2+1)].setImageBitmap(empty);
+        if((at3+1)>=max3)
+            squares[playback3.get(at3-max3+1)].setImageBitmap(empty);
+        at1++; at2++; at3++;
+        if(at1 == (playback1.size()-1)) {
+            mNext.setEnabled(false);
+            mNext.setClickable(false);
+            mCallback.reset();
+        }
     }
 
     public interface Interface0{
-        void navigate();
+        void reset();
     }
 }
