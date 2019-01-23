@@ -18,7 +18,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class Fragment1 extends Fragment implements View.OnClickListener, Board.InterfaceB{
+public class Fragment1 extends Fragment implements View.OnClickListener{
     final static String TAG = "frag1";
     Interface1 mCallback;
     View mRootView;
@@ -29,11 +29,12 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
     Button mRight;
     TextView player;
     TextView movesLeft;
-    int moves, playerid, firstMove, max, previousMove;
+    int moves, playerid, firstMove, max, previousMove, appleloc;
     ArrayList<Integer> moveList, other1, other2, placeholder;
     boolean isFinishedTurn;
     boolean allIsFinishedTurn;
-    Bitmap green, red, blue, black, empty;
+    boolean alive;
+    Bitmap green, red, blue, black, empty, apple;
     ImageView[] squares;
 
     public Fragment1() {
@@ -45,6 +46,7 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
         fragment.playerid = id;
         fragment.moves = 5;
         fragment.max = 3;
+        fragment.alive = true;
         return fragment;
     }
 
@@ -76,6 +78,7 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
         red = BitmapFactory.decodeResource(res, R.drawable.blacksquarewreddot);
         black = BitmapFactory.decodeResource(res, R.drawable.blacksquarewblackdot1);
         empty = BitmapFactory.decodeResource(res, R.drawable.blacksquare1);
+        apple = BitmapFactory.decodeResource(res, R.drawable.applesquare);
 
         squares = new ImageView[100];
         squares[0] = mBoardView.findViewById(R.id.a0); squares[1] = mBoardView.findViewById(R.id.a1); squares[2] = mBoardView.findViewById(R.id.a2); squares[3] = mBoardView.findViewById(R.id.a3); squares[4] = mBoardView.findViewById(R.id.a4); squares[5] = mBoardView.findViewById(R.id.a5); squares[6] = mBoardView.findViewById(R.id.a6); squares[7] = mBoardView.findViewById(R.id.a7); squares[8] = mBoardView.findViewById(R.id.a8); squares[9] = mBoardView.findViewById(R.id.a9);
@@ -88,105 +91,91 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
         squares[70] = mBoardView.findViewById(R.id.a70); squares[71] = mBoardView.findViewById(R.id.a71); squares[72] = mBoardView.findViewById(R.id.a72); squares[73] = mBoardView.findViewById(R.id.a73); squares[74] = mBoardView.findViewById(R.id.a74); squares[75] = mBoardView.findViewById(R.id.a75); squares[76] = mBoardView.findViewById(R.id.a76); squares[77] = mBoardView.findViewById(R.id.a77); squares[78] = mBoardView.findViewById(R.id.a78); squares[79] = mBoardView.findViewById(R.id.a79);
         squares[80] = mBoardView.findViewById(R.id.a80); squares[81] = mBoardView.findViewById(R.id.a81); squares[82] = mBoardView.findViewById(R.id.a82); squares[83] = mBoardView.findViewById(R.id.a83); squares[84] = mBoardView.findViewById(R.id.a84); squares[85] = mBoardView.findViewById(R.id.a85); squares[86] = mBoardView.findViewById(R.id.a86); squares[87] = mBoardView.findViewById(R.id.a87); squares[88] = mBoardView.findViewById(R.id.a88); squares[89] = mBoardView.findViewById(R.id.a89);
         squares[90] = mBoardView.findViewById(R.id.a90); squares[91] = mBoardView.findViewById(R.id.a91); squares[92] = mBoardView.findViewById(R.id.a92); squares[93] = mBoardView.findViewById(R.id.a93); squares[94] = mBoardView.findViewById(R.id.a94); squares[95] = mBoardView.findViewById(R.id.a95); squares[96] = mRootView.findViewById(R.id.a96); squares[97] = mRootView.findViewById(R.id.a97); squares[98] = mRootView.findViewById(R.id.a98); squares[99] = mRootView.findViewById(R.id.a99);
-        DisablePreviousMove();
+        if(alive) {
+            DisablePreviousMove();
+        }
         isFinishedTurn = false;
         allIsFinishedTurn = false;
         placeholder = new ArrayList<Integer>();
-        if(playerid == 1)
-        {
-            Log.i(TAG, "getting the info from mainactivity: player1");
-            player.setTextColor(Color.RED);
-            moveList = getArguments().getIntegerArrayList("storage1");
-            if(moveList != null)
-            {
-                for(int i = 0; i < max; i++) {
-                    placeholder.add(0, moveList.get(i));
+        appleloc = getArguments().getInt("appleloc");
+        if(alive) {
+            if (playerid == 1) {
+                Log.i(TAG, "getting the info from mainactivity: player1");
+                player.setTextColor(Color.RED);
+                moveList = getArguments().getIntegerArrayList("storage1");
+                if (moveList != null) {
+                    for (int i = 0; i < max; i++) {
+                        placeholder.add(0, moveList.get(i));
+                    }
+                } else {
+                    ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves1");
+                    moveList = new ArrayList<Integer>();
+                    for (int i = 0; i < temp.size(); i++) {
+                        moveList.add(i, temp.get(i));
+                        placeholder.add(i, temp.get(i));
+                    }
                 }
-            }
-            else {
-                ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves1");
-                moveList = new ArrayList<Integer>();
-                for (int i = 0; i < temp.size(); i++)
-                {
-                    moveList.add(i, temp.get(i));
-                    placeholder.add(i, temp.get(i));
+                other1 = getArguments().getIntegerArrayList("firstmoves2");
+                other2 = getArguments().getIntegerArrayList("firstmoves3");
+                setBoard(placeholder, other1, other2);
+            } else if (playerid == 2) {
+                Log.i(TAG, "getting the info from mainactivity: player2");
+                player.setTextColor(Color.GREEN);
+                other1 = getArguments().getIntegerArrayList("firstmoves1");
+                moveList = getArguments().getIntegerArrayList("storage2");
+                if (moveList != null) {
+                    for (int i = 0; i < max; i++) {
+                        placeholder.add(0, moveList.get(i));
+                    }
+                } else {
+                    ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves2");
+                    moveList = new ArrayList<Integer>();
+                    for (int i = 0; i < temp.size(); i++) {
+                        moveList.add(i, temp.get(i));
+                        placeholder.add(i, temp.get(i));
+                    }
                 }
-            }
-            other1 = getArguments().getIntegerArrayList("firstmoves2");
-            other2 = getArguments().getIntegerArrayList("firstmoves3");
-            setBoard(placeholder, other1, other2);
-        }
-        else if(playerid == 2)
-        {
-            Log.i(TAG, "getting the info from mainactivity: player2");
-            player.setTextColor(Color.GREEN);
-            other1 = getArguments().getIntegerArrayList("firstmoves1");
-            moveList = getArguments().getIntegerArrayList("storage2");
-            if(moveList != null)
-            {
-                for(int i = 0; i < max; i++) {
-                    placeholder.add(0, moveList.get(i));
+                other2 = getArguments().getIntegerArrayList("firstmoves3");
+                setBoard(other1, placeholder, other2);
+            } else if (playerid == 3) {
+                Log.i(TAG, "getting the info from mainactivity: player3");
+                player.setTextColor(Color.BLUE);
+                other1 = getArguments().getIntegerArrayList("firstmoves1");
+                other2 = getArguments().getIntegerArrayList("firstmoves2");
+                moveList = getArguments().getIntegerArrayList("storage3");
+                if (moveList != null) {
+                    for (int i = 0; i < max; i++) {
+                        placeholder.add(0, moveList.get(i));
+                    }
+                } else {
+                    ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves3");
+                    moveList = new ArrayList<Integer>();
+                    for (int i = 0; i < temp.size(); i++) {
+                        moveList.add(i, temp.get(i));
+                        placeholder.add(i, temp.get(i));
+                    }
                 }
-            }
-            else {
-                ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves2");
-                moveList = new ArrayList<Integer>();
-                for (int i = 0; i < temp.size(); i++)
-                {
-                    moveList.add(i, temp.get(i));
-                    placeholder.add(i, temp.get(i));
-                }
-            }
-            other2 = getArguments().getIntegerArrayList("firstmoves3");
-            setBoard(other1, placeholder, other2);
-        }
-        else if(playerid == 3)
-        {
-            Log.i(TAG, "getting the info from mainactivity: player3");
-            player.setTextColor(Color.BLUE);
-            other1 = getArguments().getIntegerArrayList("firstmoves1");
-            other2 = getArguments().getIntegerArrayList("firstmoves2");
-            moveList = getArguments().getIntegerArrayList("storage3");
-            if(moveList != null)
-            {
-                for(int i = 0; i < max; i++) {
-                    placeholder.add(0, moveList.get(i));
-                }
-            }
-            else {
-                ArrayList<Integer> temp = getArguments().getIntegerArrayList("firstmoves3");
-                moveList = new ArrayList<Integer>();
-                for (int i = 0; i < temp.size(); i++)
-                {
-                    moveList.add(i, temp.get(i));
-                    placeholder.add(i, temp.get(i));
-                }
-            }
                 setBoard(other1, other2, placeholder);
-        }
+            }
 
-        firstMove = moveList.get(0);
-        if(firstMove < 10)
-        {
-            mLeft.setEnabled(false);
-            mLeft.setClickable(false);
+            firstMove = moveList.get(0);
+            if (firstMove < 10) {
+                mLeft.setEnabled(false);
+                mLeft.setClickable(false);
+            }
+            if (firstMove % 10 == 9) {
+                mDown.setEnabled(false);
+                mDown.setClickable(false);
+            }
+            if (firstMove > 89) {
+                mRight.setEnabled(false);
+                mRight.setClickable(false);
+            }
+            if (firstMove % 10 == 0) {
+                mUp.setEnabled(false);
+                mUp.setClickable(false);
+            }
         }
-        if(firstMove%10 ==9)
-        {
-            mDown.setEnabled(false);
-            mDown.setClickable(false);
-        }
-        if(firstMove > 89)
-        {
-            mRight.setEnabled(false);
-            mRight.setClickable(false);
-        }
-        if(firstMove%10 == 0)
-        {
-            mUp.setEnabled(false);
-            mUp.setClickable(false);
-        }
-
         return mRootView;
     }
 
@@ -206,15 +195,6 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
     public void DecrementMovesLeft(){
         moves--;
         movesLeft.setText("Moves Left: "+moves);
-    }
-
-    public void IncrementMovesLeft(){
-        moves++;
-        movesLeft.setText("Moves Left:"+moves);
-    }
-
-    public void changeText(String x){
-        player.setText(x);
     }
 
     public void updateBoard(ArrayList<Integer> p)
@@ -332,6 +312,7 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
         for(int i = 0; i < p3.size(); i++) {
             squares[p3.get(i)].setImageBitmap(blue);
         }
+        squares[appleloc].setImageBitmap(apple);
     }
 
     @Override
@@ -371,11 +352,18 @@ public class Fragment1 extends Fragment implements View.OnClickListener, Board.I
             mCallback.navigate1(playerid, moveList);
         }
     }
-
-    public void todo_board(){
-
+    public void killplayer(int player)
+    {
+        ArrayList<Integer> filler = new ArrayList<Integer>();
+        if(player == 2)
+        {
+            setBoard(moveList, filler, other2);
+        }
+        else if(player == 3)
+        {
+            setBoard(moveList, other1, filler);
+        }
     }
-
     public interface Interface1{
         void navigate1(int i, ArrayList<Integer> moves);
         void storeIt(int playerid, ArrayList<Integer> x);
